@@ -2,6 +2,42 @@ const { db } = require("../config/firebase");
 const cloudinary = require("../config/cloudinary");
 
 // ✅ Add a Machine (POST /api/machines)
+
+const addMachine = async (req, res) => {
+  try {
+    const { title, category, fuelType, rentPrice, availabilityEndDate, location, images, description } = req.body;
+    const ownerId = req.user.userId; // User adding the machine
+
+    // 🔹 Ensure all required fields are present
+    if (!title || !category || !fuelType || !rentPrice || !availabilityEndDate || !location || !images || !description) {
+      return res.status(400).json({ error: "All fields, including description, are required!" });
+    }
+
+    // 🔹 Convert single image URL to an array (for consistency)
+    const imageArray = Array.isArray(images) ? images : [images];
+
+    const machineRef = await db.collection("machines").add({
+      ownerId,
+      title,
+      title_lowercase: title.toLowerCase(), // 🔹 Store lowercase version
+      category,
+      fuelType,
+      rentPrice,
+      availabilityEndDate,
+      location,
+      images: imageArray, // 🔹 Store as an array
+      description, // 🔹 NEW FIELD
+      createdAt: new Date().toISOString(),
+    });
+
+    return res.status(201).json({ message: "Machine added successfully!", machineId: machineRef.id });
+  } catch (error) {
+    console.error("Error adding machine:", error);
+    res.status(500).json({ error: "Failed to add machine!" });
+  }
+};
+
+/*
 const addMachine = async (req, res) => {
   try {
     const { title, category, fuelType, rentPrice, availabilityEndDate, location, images } = req.body;
@@ -34,7 +70,7 @@ const addMachine = async (req, res) => {
     res.status(500).json({ error: "Failed to add machine!" });
   }
 };
-
+*/
 // ✅ Get All Machines (GET /api/machines)
 const getAllMachines = async (req, res) => {
   try {
